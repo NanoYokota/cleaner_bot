@@ -250,4 +250,46 @@ class NameListSheet extends SheetInfo {
     this.member.indexes.on = this.member.indexes.next;
     this.member.indexes.next++;
   }
+
+  updateCleaningDates() {
+    const funcName = `${ this.className }.updateCleaningDates`;
+    const members = this.member.values.raw;
+    // 担当者にセットするための日付を取得
+    const dates = cleaningDates();
+    // セットするように配列を組み直す
+    let datesForMembers = [];
+    let count = 0;
+    for ( let i = this.member.indexes.on; i < members.length; i++ ) {
+      if ( members[ i ][ 2 ] == "なし" ) {
+        datesForMembers[ i ] = [ '' ];
+      } else {
+        datesForMembers[ i ] = [ dates[ count ] ];
+        count++;
+      }
+    }
+    if ( DEBUG ) {
+      console.log( `[DEBUG: ${ funcName }] datesForMembers ↓` );
+      console.log( datesForMembers );
+      console.log( `[DEBUG: ${ funcName }] datesForMembers.length: ${ datesForMembers.length }` );
+    }
+    for ( let i = 0; i < this.member.indexes.on; i++ ) {
+      if ( members[ i ][ 2 ] == "なし" ) {
+        datesForMembers[ i ] = [ '' ];
+      } else {
+        datesForMembers[ i ] = [ dates[ count ] ];
+        count++;
+      }
+    }
+    if ( DEBUG ) {
+      console.log( `[DEBUG: ${ funcName }] datesForMembers ↓` );
+      console.log( datesForMembers );
+      console.log( `[DEBUG: ${ funcName }] datesForMembers.length: ${ datesForMembers.length }` );
+    }
+    const rangeDate = this.getDateRange();
+    try {
+      rangeDate.setValues( datesForMembers );
+    } catch ( e ) {
+      console.log( `[ERROR: ${ funcName }] ${ e }` );
+    }
+  }
 }

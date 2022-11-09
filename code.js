@@ -61,62 +61,33 @@ function roomId( accountId )
   return false;
 }
 
-function remindCleanup()
+function isHoliday( date )
 {
-  const funcName = "remindCleanup";
-  const indexes = nameListSh.getMemberIndexes( "on", "flag" );
-  const members = nameListSh.member.values.raw;
-  let memberOn = members[ indexes.on ];
-  if ( !memberOn ) {
-    throw `[ERROR: ${ funcName }] The flag is not detected.`;
+  const theDate = new Date( date.setDate( date.getDate() ) );
+  const weekInt = theDate.getDay();
+  if ( weekInt <= 0 || 6 <= weekInt ) {
+    return true;
   }
-  if ( DEBUG ) {
-    console.log( `[DEBUG: ${ funcName }] memberOn ↓` );
-    console.log( memberOn );
+  const calendarId = "ja.japanese#holiday@group.v.calendar.google.com";
+  const calendar = CalendarApp.getCalendarById( calendarId );
+  const events = calendar.getEventsForDay( theDate );
+  if ( events.length > 0 ) {
+    return true;
   }
-  // リマインドメッセージの組み立て
-  let message = `[To:${ memberOn[ 1 ] }] ${ memberOn[ 0 ] }さん\n`;
-  message += "今日のトイレ掃除当番です。\n";
-  message += "よろしくお願いします。\n";
-  const week = 4;
-  message += "[info][title]" + week + "週間先までの担当者[/title]\n";
-  // 来週以降の担当者と日付を組み立て
-  let count = 0;
-  for ( let i = indexes.on + 1; i < members.length; i++ ) {
-    if ( DEBUG ) {
-      console.log( `[DEBUG: ${ funcName }] i: ${ i }` );
-      console.log( `[DEBUG: ${ funcName }] count: ${ count }` );
-    }
-    const member  = members[ i ];
-    if ( DEBUG ) {
-      console.log( `[DEBUG: ${ funcName }] member ↓` );
-      console.log( member );
-    }
-    if ( i + 1 == members.length && count < week ) {
-      i = -1;
-      continue;
-    }
-    if ( member[ 2 ] == "なし" ) {
-      continue;
-    }
-    const month = member[ 4 ].getMonth() + 1;
-    const date = member[ 4 ].getDate();
-    message += `${ month }月${ date }日：${ member[ 0 ] }さん\n`;
-    count++;
-    if ( count >= week ) {
-      break;
+  if ( HOLIDAYS[ theDate.getMonth() ] ) {
+    for ( let i = 0; i < HOLIDAYS[ theDate.getMonth() ].length; i++ ) {
+      const holiday = HOLIDAYS[ theDate.getMonth() ][ i ];
+      if ( holiday == theDate.getDate() ) {
+        return true;
+      }
     }
   }
-  message += `[/info]`;
-  // CWで通知
-  if ( DEBUG ) {
-    sendMessageCw( message, roomId_test );
-  } else {
-    sendMessageCw( message, roomId_fukuoka );
-  }
-  // 次の掃除担当へフラグを移動。
-  nameListSh.switchCleaner();
-  // 担当者にセットするための日付を取得
+  return false;
+}
+
+function cleaningDates()
+{
+  const funcName = "cleaningDates";
   let dates = [];
   let year = yearToday;
   let month = monthToday - 1;
@@ -166,59 +137,66 @@ function remindCleanup()
     console.log( `[DEBUG: ${ funcName }] dates ↓` );
     console.log( dates );
   }
-  // セットするように配列を組み直す
-  let datesForMembers = [];
-  count = 0;
-  for ( let i = indexes.on; i < members.length; i++ ) {
-    if ( members[ i ][ 2 ] == "なし" ) {
-      datesForMembers[ i ] = [ '' ];
-    } else {
-      datesForMembers[ i ] = [ dates[ count ] ];
-      count++;
-    }
-  }
-  if ( DEBUG ) {
-    console.log( `[DEBUG: ${ funcName }] datesForMembers ↓` );
-    console.log( datesForMembers );
-    console.log( `[DEBUG: ${ funcName }] datesForMembers.length: ${ datesForMembers.length }` );
-  }
-  for ( let i = 0; i < indexes.on; i++ ) {
-    if ( members[ i ][ 2 ] == "なし" ) {
-      datesForMembers[ i ] = [ '' ];
-    } else {
-      datesForMembers[ i ] = [ dates[ count ] ];
-      count++;
-    }
-  }
-  if ( DEBUG ) {
-    console.log( `[DEBUG: ${ funcName }] datesForMembers ↓` );
-    console.log( datesForMembers );
-    console.log( `[DEBUG: ${ funcName }] datesForMembers.length: ${ datesForMembers.length }` );
-  }
-  const rangeDate = nameListSh.getDateRange();
-  rangeDate.setValues( datesForMembers );
+  return dates;
 }
 
-function isHoliday( date )
+function buildRemindMessage()
 {
-  const theDate = new Date( date.setDate( date.getDate() ) );
-  const weekInt = theDate.getDay();
-  if ( weekInt <= 0 || 6 <= weekInt ) {
-    return true;
+  const funcName = "buildRemindMessage";
+  const indexes = nameListSh.member.indexes;
+  const members = nameListSh.member.values.raw;
+  const memberOn = members[ indexes.on ];
+  if ( !memberOn ) {
+    throw `[ERROR: ${ funcName }] The flag is not detected.`;
   }
-  const calendarId = "ja.japanese#holiday@group.v.calendar.google.com";
-  const calendar = CalendarApp.getCalendarById( calendarId );
-  const events = calendar.getEventsForDay( theDate );
-  if ( events.length > 0 ) {
-    return true;
+  if ( DEBUG ) {
+    console.log( `[DEBUG: ${ funcName }] memberOn ↓` );
+    console.log( memberOn );
   }
-  if ( HOLIDAYS[ theDate.getMonth() ] ) {
-    for ( let i = 0; i < HOLIDAYS[ theDate.getMonth() ].length; i++ ) {
-      const holiday = HOLIDAYS[ theDate.getMonth() ][ i ];
-      if ( holiday == theDate.getDate() ) {
-        return true;
-      }
+  // リマインドメッセージの組み立て
+  let message = `[To:${ memberOn[ 1 ] }] ${ memberOn[ 0 ] }さん\n`;
+  message += "今日のトイレ掃除当番です。\n";
+  message += "よろしくお願いします。\n";
+  const week = 4;
+  message += "[info][title]" + week + "週間先までの担当者[/title]\n";
+  // 来週以降の担当者と日付を組み立て
+  let count = 0;
+  for ( let i = indexes.on + 1; i < members.length; i++ ) {
+    if ( i + 1 == members.length && count < week ) {
+      i = -1;
+      continue;
     }
+    if ( DEBUG ) {
+      console.log( `[DEBUG: ${ funcName }] i: ${ i }` );
+      console.log( `[DEBUG: ${ funcName }] count: ${ count }` );
+    }
+    const member  = members[ i ];
+    if ( DEBUG ) {
+      console.log( `[DEBUG: ${ funcName }] member ↓` );
+      console.log( member );
+    }
+    if ( member[ 2 ] == "なし" ) {
+      continue;
+    }
+    const month = member[ 4 ].getMonth() + 1;
+    const date = member[ 4 ].getDate();
+    message += `${ month }月${ date }日：${ member[ 0 ] }さん\n`;
+    count++;
+    if ( count >= week ) {
+      break;
+    }
+  }
+  message += `[/info]`;
+  return message;
+}
+
+function isToday( date ) {
+  if (
+    date.getFullYear() == yearToday &&
+    date.getMonth() == monthToday - 1 &&
+    date.getDate() == dateToday
+  ) {
+    return true;
   }
   return false;
 }
