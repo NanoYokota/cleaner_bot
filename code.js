@@ -1,6 +1,9 @@
 
 function sendMessageCw( message = "", roomID = roomId_test )
 {
+  if ( !isReleased ) {
+    roomID = roomId_test;
+  }
   const url = `${ CW_ENDPOINT_URL }/rooms/${ roomID }/messages`;
   let options = {
     'method' : 'POST',
@@ -127,7 +130,7 @@ function cleaningDates()
       }
     }
     month++;
-    dateStr = 1;
+    dateStart = 1;
     if ( month > 12 ) {
       year++;
       month = 1;
