@@ -94,7 +94,7 @@ function cleaningDates()
   let dates = [];
   let year = yearToday;
   let month = monthToday - 1;
-  let dateStart = dateToday;
+  let dateStart = dateToday + 1;
   const commuteNum = nameListSh.getCommuteMemberNum();
   while( dates.length < commuteNum ) {
     for ( let i = dateStart; i <= 31; i++ ) {
@@ -157,7 +157,8 @@ function buildRemindMessage()
     console.log( memberOn );
   }
   // リマインドメッセージの組み立て
-  let message = `[To:${ memberOn[ 1 ] }] ${ memberOn[ 0 ] }さん\n`;
+  let message = isReleased ? `[To:${ memberOn[ 1 ] }] ${ memberOn[ 0 ] }さん\n` : "";
+  message += !isReleased ? "【テスト実行】※無視してください。\n" : "";
   message += "今日のトイレ掃除当番です。\n";
   message += "よろしくお願いします。\n";
   const week = 4;
