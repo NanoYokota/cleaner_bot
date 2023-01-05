@@ -1,7 +1,8 @@
 function remindCleanup()
 {
   const funcName = "remindCleanup";
-  if ( !isToday( nameListSh.getMember( "on", "flag" )[ 4 ] ) && isReleased ) {
+  if ( !isToday( nameListSh.getMember( "on", "flag" )[ 4 ] ) ) {
+    log( funcName, "Today is not cleaning day.", { type: "info", } );
     return;
   }
   const message = buildRemindMessage();

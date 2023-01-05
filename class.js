@@ -234,17 +234,17 @@ class NameListSheet extends SheetInfo {
       1,
       this.member.cols.num
     );
+    if ( DEBUG ) {
+      console.log( `[DEBUG: ${ funcName }] rangeNext.getValues() ↓` );
+      console.log( rangeNext.getValues() );
+    }
     if ( !memberNext || !rangeNext || !rangeOn || !memberOn ) {
       throw "The flag is not detected.";
     }
     memberOn[ 3 ] = "";
     memberNext[ 3 ] = "on";
-    if ( DEBUG ) {
-      console.log( `[DEBUG: ${ funcName }] row ↓` );
-      console.log( memberOn );
-      console.log( `[DEBUG: ${ funcName }] memberNext ↓` );
-      console.log( memberNext );
-    }
+    log( funcName, memberOn, { label: "memberOn", type: "info", lineTwo: true, } );
+    log( funcName, memberNext, { label: "memberNext", type: "info", lineTwo: true, } );
     rangeOn.setValues( [ memberOn ] );
     rangeNext.setValues( [ memberNext ] );
     this.member.indexes.on = this.member.indexes.next;
@@ -280,11 +280,8 @@ class NameListSheet extends SheetInfo {
         count++;
       }
     }
-    if ( DEBUG ) {
-      console.log( `[DEBUG: ${ funcName }] datesForMembers ↓` );
-      console.log( datesForMembers );
-      console.log( `[DEBUG: ${ funcName }] datesForMembers.length: ${ datesForMembers.length }` );
-    }
+    log( funcName, datesForMembers, { label: "datesForMembers", type: "info", lineTwo: true, } );
+    log( funcName, datesForMembers.length, { label: "datesForMembers.length", type: "info", } );
     const rangeDate = this.getDateRange();
     try {
       rangeDate.setValues( datesForMembers );

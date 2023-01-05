@@ -1,6 +1,9 @@
 const nameListSh = new NameListSheet( "名簿" );
 
-const todayObject = new Date();
+const todayObject = isReleased ? new Date() : new Date( 2022, 11, 28 );
+if ( DEBUG ) {
+  log( "global", todayObject, { label: "todayObject", } );
+}
 const yearToday = todayObject.getFullYear();
 const monthToday = todayObject.getMonth() + 1;
 const dateToday = todayObject.getDate();

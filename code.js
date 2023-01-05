@@ -66,24 +66,55 @@ function roomId( accountId )
 
 function isHoliday( date )
 {
-  const theDate = new Date( date.setDate( date.getDate() ) );
-  const weekInt = theDate.getDay();
+  if ( isWeekend( date ) ) {
+    return true;
+  }
+  if ( isSpecialHoliday( date ) ) {
+    return true;
+  }
+  return false;
+}
+
+function isWeekend( date )
+{
+  const weekInt = date.getDay();
   if ( weekInt <= 0 || 6 <= weekInt ) {
     return true;
   }
+  return false;
+}
+
+function isSpecialHoliday( date )
+{
   const calendarId = "ja.japanese#holiday@group.v.calendar.google.com";
   const calendar = CalendarApp.getCalendarById( calendarId );
-  const events = calendar.getEventsForDay( theDate );
+  const events = calendar.getEventsForDay( date );
   if ( events.length > 0 ) {
     return true;
   }
-  if ( HOLIDAYS[ theDate.getMonth() ] ) {
-    for ( let i = 0; i < HOLIDAYS[ theDate.getMonth() ].length; i++ ) {
-      const holiday = HOLIDAYS[ theDate.getMonth() ][ i ];
-      if ( holiday == theDate.getDate() ) {
+  if ( HOLIDAYS[ date.getMonth() ] ) {
+    for ( let i = 0; i < HOLIDAYS[ date.getMonth() ].length; i++ ) {
+      const holiday = HOLIDAYS[ date.getMonth() ][ i ];
+      if ( holiday == date.getDate() ) {
         return true;
       }
     }
+  }
+  return false;
+}
+
+function isTodayFriday() {
+  return dayToday == 5;
+}
+
+function isThisFriday( date ) {
+  const diffTime = date.getTime() - todayObject.getTime();
+  const diffDay = Math.floor( timestampToDate( diffTime ) );
+  if ( DEBUG ) {
+    log( 'isThisFriday', diffDay, { label : "diffDay" } );
+  }
+  if ( diffDay >= 0 && diffDay < 5 && date.getDay() == 5 ) {
+    return true;
   }
   return false;
 }
@@ -95,31 +126,52 @@ function cleaningDates()
   let year = yearToday;
   let month = monthToday - 1;
   let dateStart = dateToday + 1;
+  let lastDate = new Date( year, month, 0 ).getDate() + 1;
+  if ( DEBUG ) {
+    log( funcName, lastDate, { label: "lastDate", } );
+  }
   const commuteNum = nameListSh.getCommuteMemberNum();
   while( dates.length < commuteNum ) {
-    for ( let i = dateStart; i <= 31; i++ ) {
-      if ( DEBUG ) {
-        console.log( `[DEBUG: ${ funcName }] i: ${ i }`);
-      }
+    for ( let i = dateStart; i <= lastDate; i++ ) {
       const date = new Date( year, month, i );
-      if ( date.getDay() == 5 && !isHoliday( date ) ) {
+      if ( DEBUG ) {
+        log( funcName, date, { label: "date", } );
+      }
+      if ( isWeekend( date ) ) {
+        if ( DEBUG ) {
+          log( funcName, "Skip weekend." );
+        }
+        continue;
+      }
+      if ( isThisFriday( date ) ) {
+        if ( DEBUG ) {
+          log( funcName, "Skip this friday." );
+        }
+        continue;
+      }
+      if ( date.getDay() == 5 && !isSpecialHoliday( date ) ) {
         dates.push( date );
-      } else if ( date.getDay() == 5 && isHoliday( date ) && i - 1 > 0 ) {
+        log( funcName, date, { label: "Friday added", type: "info", } );
+      } else if ( date.getDay() == 5 && isSpecialHoliday( date ) && i - 1 > 0 ) {
         const dateThu = new Date( year, month, i - 1 );
-        if ( !isHoliday( dateThu ) ) {
+        if ( !isSpecialHoliday( dateThu ) ) {
           dates.push( dateThu );
+          log( funcName, dateThu, { label: "Thursday added", type: "info", } );
         } else if ( i - 2 > 0 ) {
           const dataWed = new Date( year, month, i - 2 );
-          if ( !isHoliday( dataWed ) ) {
+          if ( !isSpecialHoliday( dataWed ) ) {
             dates.push( dataWed );
+            log( funcName, dataWed, { label: "Wednesday added", type: "info", } );
           } else if ( i - 3 > 0 ) {
             const dateTue = new Date( year, month, i - 3 );
-            if ( !isHoliday( dateTue ) ) {
+            if ( !isSpecialHoliday( dateTue ) ) {
               dates.push( dateTue );
+              log( funcName, dateTue, { label: "Tuesday added", type: "info", } );
             } else if ( i - 4 > 0 ) {
               const dateMon = new Date( year, month, i - 4 );
-              if ( !isHoliday( dateMon ) ) {
+              if ( !isSpecialHoliday( dateMon ) ) {
                 dates.push( dateMon );
+                log( funcName, dateMon, { label: "Monday added", type: "info", } );
               }
             }
           }
@@ -131,15 +183,13 @@ function cleaningDates()
     }
     month++;
     dateStart = 1;
-    if ( month > 12 ) {
+    if ( month + 1 > 12 ) {
       year++;
-      month = 1;
+      month = 1 - 1; // 1月(Dateオブジェクトに入れる数値は実際の月の-1)
     }
+    lastDate = new Date( year, month, 0 );
   }
-  if ( DEBUG ) {
-    console.log( `[DEBUG: ${ funcName }] dates ↓` );
-    console.log( dates );
-  }
+  log( funcName, dates, { label: "dates", type: "info", lineTwo: true, } );
   return dates;
 }
 
@@ -203,4 +253,8 @@ function isToday( date ) {
     return true;
   }
   return false;
+}
+
+function timestampToDate( timestamp ) {
+  return timestamp / ( 1000 * 60 * 60 * 24 );
 }
