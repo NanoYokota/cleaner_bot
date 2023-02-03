@@ -1,6 +1,6 @@
 const nameListSh = new NameListSheet( "名簿" );
 
-const todayObject = isReleased ? new Date() : new Date( 2022, 11, 28 );
+const todayObject = isReleased ? new Date() : DATE_DUMMY;
 if ( DEBUG ) {
   log( "global", todayObject, { label: "todayObject", } );
 }
