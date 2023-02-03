@@ -215,14 +215,19 @@ function buildRemindMessage()
   message += "[info][title]" + week + "週間先までの担当者[/title]\n";
   // 来週以降の担当者と日付を組み立て
   let count = 0;
-  for ( let i = indexes.on + 1; i < members.length; i++ ) {
-    if ( i + 1 == members.length && count < week ) {
+  if ( DEBUG ) {
+    log( funcName, indexes.on, { label: "indexes.on", } );
+    log( funcName, members.length, { label: "members.length", } );
+  }
+  for ( let i = indexes.on + 1; count < week; i++ ) {
+    if ( DEBUG ) {
+      log( funcName, count, { label: "count", } );
+      log( funcName, i, { label: "i", } );
+    }
+    if ( i + 1 >= members.length && count < week ) {
+      if ( DEBUG ) log( funcName, "Recurrent." );
       i = -1;
       continue;
-    }
-    if ( DEBUG ) {
-      console.log( `[DEBUG: ${ funcName }] i: ${ i }` );
-      console.log( `[DEBUG: ${ funcName }] count: ${ count }` );
     }
     const member  = members[ i ];
     if ( DEBUG ) {
@@ -236,15 +241,21 @@ function buildRemindMessage()
     const date = member[ 4 ].getDate();
     message += `${ month }月${ date }日：${ member[ 0 ] }さん\n`;
     count++;
-    if ( count >= week ) {
-      break;
-    }
   }
   message += `[/info]`;
   return message;
 }
 
 function isToday( date ) {
+  const funcName = "isToday";
+  if ( DEBUG ) {
+    log( funcName, date.getFullYear(), { label: "date.getFullYear()", } );
+    log( funcName, date.getMonth(), { label: "date.getMonth()", } );
+    log( funcName, date.getDate(), { label: "date.getDate()", } );
+    log( funcName, yearToday, { label: "yearToday", } );
+    log( funcName, monthToday - 1, { label: "monthToday - 1", } );
+    log( funcName, dateToday, { label: "dateToday", } );
+  }
   if (
     date.getFullYear() == yearToday &&
     date.getMonth() == monthToday - 1 &&
